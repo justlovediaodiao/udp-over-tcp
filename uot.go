@@ -25,6 +25,9 @@ type PacketConn interface {
 	// ReadPacket is similar with ReadFrom.
 	// It returns readed packet length, target address of udp packet, remote address, error.
 	ReadPacket(p []byte) (n int, target net.Addr, addr net.Addr, err error)
+	// WritePacket is similar with WriteTo.
+	// It writes packet to addr. target is origin packet addr.
+	WritePacket(p []byte, target net.Addr, addr net.Addr) (n int, err error)
 }
 
 type defaultConn struct {
@@ -78,6 +81,10 @@ func (c *defaultPacketConn) ReadPacket(p []byte) (int, net.Addr, net.Addr, error
 	length := len(target)
 	copy(p, p[length:n])
 	return n - length, target, addr, nil
+}
+
+func (c *defaultPacketConn) WritePacket(p []byte, target net.Addr, addr net.Addr) (int, error) {
+	return c.PacketConn.WriteTo(p, addr)
 }
 
 func (c *defaultConn) Handshake(addr net.Addr) (net.Addr, error) {

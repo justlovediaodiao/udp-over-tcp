@@ -80,7 +80,7 @@ func (c *Client) Serve(conn PacketConn, server string) {
 					c.logf("handshake error: %s", err)
 					return
 				}
-				err = c.relay(conn, rc, addr, pbuf)
+				err = c.relay(conn, rc, target, addr, pbuf)
 				if err != nil {
 					c.logf("relay error: %s", err)
 				}
@@ -98,7 +98,7 @@ func (c *Client) Serve(conn PacketConn, server string) {
 }
 
 // relay copy between udp and tcp conn until timeout.
-func (c *Client) relay(conn PacketConn, rc Conn, addr net.Addr, pbuf chan []byte) error {
+func (c *Client) relay(conn PacketConn, rc Conn, target net.Addr, addr net.Addr, pbuf chan []byte) error {
 	done := make(chan error, 1)
 	// relay from udp to tcp
 	go func() {
@@ -133,7 +133,7 @@ func (c *Client) relay(conn PacketConn, rc Conn, addr net.Addr, pbuf chan []byte
 		if err != nil {
 			break
 		}
-		_, err = conn.WriteTo(buf[:n], addr)
+		_, err = conn.WritePacket(buf[:n], target, addr)
 		if err != nil {
 			break
 		}
