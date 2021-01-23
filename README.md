@@ -1,6 +1,6 @@
-# TCP-Over-UDP
+# UDP-Over-TCP
 
-TCP-Over-UDP is a proxy library written in Go. It transfers udp packets over tcp connections. 
+UDP-Over-TCP is a proxy library written in Go. It transfers udp packets over tcp connections. 
 
 ```
 app <--udp--> client <--tcp--> server <--udp--> target
@@ -10,13 +10,13 @@ app <--udp--> client <--tcp--> server <--udp--> target
 ### Installation
 
 ```shell
-go get -u github.com/justlovediaodiao/tcp-over-udp
+go get -u github.com/justlovediaodiao/udp-over-tcp
 ```
 
 Import in your code:
 
 ```go
-import "github.com/justlovediaodiao/tcp-over-udp"
+import "github.com/justlovediaodiao/udp-over-tcp"
 ```
 
 ### Quick start
@@ -24,7 +24,7 @@ import "github.com/justlovediaodiao/tcp-over-udp"
 - client
 
 ```go
-import "github.com/justlovediaodiao/tcp-over-udp"
+import "github.com/justlovediaodiao/udp-over-tcp"
 
 func main() {
     // example code, ignore err check.
