@@ -78,17 +78,26 @@ Implement `PacketConn` and `Conn` interface to define protocol.
 The library provides a default implement.
 
 Protocol define of defaultPacketConn:
-```
-[addr][payload]
-addr: target address of packet,  which is a socks5 address defined in RFC 1928.
-payload: raw udp packet.
-```
+
+socks udp packet format, see RFC 1928 section 7.
 
 Protocol define of defaultConn:
+
+Request:
 ```
 [handshake][packet...]
-handshake: target address of packet, which is a socks5 address defined in RFC 1928.
-packet: [size][payload]
-size: 2-byte, length of payload.
-payload: raw udp packet.
 ```
+- handshake: target address of packet, which is a socks address defined in RFC 1928 section 4.
+- packet: 
+```
+[size][payload]
+```
+- size: 2-byte, length of payload.
+- payload: raw udp packet.
+
+Response:
+```
+[packet...]
+```
+
+same as Request, but with no handsahke.

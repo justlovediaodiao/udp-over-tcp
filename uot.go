@@ -41,16 +41,22 @@ type defaultPacketConn struct {
 
 /*
 Protocol define of defaultPacketConn:
-[addr][payload]
-addr: target address of packet,  which is a socks5 address defined in RFC 1928.
-payload: raw udp packet.
+socks udp packet format, see RFC 1928 section 7.
 
 Protocol define of defaultConn:
+
+Request:
 [handshake][packet...]
-handshake: target address of packet, which is a socks5 address defined in RFC 1928.
+
+handshake: target address of packet, which is a socks5 address defined in RFC 1928 section 4.
 packet: [size][payload]
 size: 2-byte, length of payload.
 payload: raw udp packet.
+
+Response:
+[packet...]
+
+same as Request, but with no handsahke.
 */
 
 // DefaultOutConn return a default client side Conn.
@@ -73,18 +79,38 @@ func (c *defaultPacketConn) ReadPacket(p []byte) (int, net.Addr, net.Addr, error
 	if err != nil {
 		return 0, nil, nil, err
 	}
-	// read addr in packet head and remove it.
-	target, err := ReadSocksAddr(bytes.NewReader(p[:n]))
+	head := 3 // RSV FRAG
+	if len(p) < head {
+		return 0, nil, nil, io.ErrShortBuffer
+	}
+	target, err := ReadSocksAddr(bytes.NewReader(p[2:n]))
 	if err != nil {
 		return 0, nil, nil, err
 	}
-	length := len(target)
+	length := head + len(target)
 	copy(p, p[length:n])
 	return n - length, target, addr, nil
 }
 
 func (c *defaultPacketConn) WritePacket(p []byte, target net.Addr, addr net.Addr) (int, error) {
-	return c.PacketConn.WriteTo(p, addr)
+	socksAddr, ok := target.(SocksAddr)
+	if !ok {
+		socksAddr = ParseSocksAddr(target.String())
+		if socksAddr == nil {
+			return 0, errors.New("error socks address")
+		}
+	}
+
+	length := len(socksAddr) + len(p) + 3
+	if length > MaxPacketSize {
+		return 0, errors.New("over max package size")
+	}
+	buf := make([]byte, 0, length)
+	buf = append(buf, 0, 0, 0) // RSV FRAG
+	buf = append(buf, socksAddr...)
+	buf = append(buf, p...)
+
+	return c.PacketConn.WriteTo(buf, addr)
 }
 
 func (c *defaultConn) Handshake(addr net.Addr) (net.Addr, error) {
@@ -121,7 +147,7 @@ func (c *defaultConn) Read(b []byte) (int, error) {
 // Write write a full udp packet, if head+b is longer than packet max size, return error.
 func (c *defaultConn) Write(b []byte) (int, error) {
 	n := len(b)
-	if n > MaxPacketSize-2 {
+	if n+2 > MaxPacketSize {
 		return 0, errors.New("over max packet size")
 	}
 	_, err := c.Conn.Write([]byte{byte(n >> 8), byte(n & 0x000000ff)})
