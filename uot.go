@@ -83,7 +83,7 @@ func (c *defaultPacketConn) ReadPacket(p []byte) (int, net.Addr, net.Addr, error
 	if len(p) < head {
 		return 0, nil, nil, io.ErrShortBuffer
 	}
-	target, err := ReadSocksAddr(bytes.NewReader(p[2:n]))
+	target, err := ReadSocksAddr(bytes.NewReader(p[head:n]))
 	if err != nil {
 		return 0, nil, nil, err
 	}
