@@ -22,7 +22,7 @@ type SocksAddr []byte
 
 // Network impl net.Addr.
 func (addr SocksAddr) Network() string {
-	return "udp"
+	return ""
 }
 
 // String impl net.Addr

@@ -33,7 +33,7 @@ func (s *Server) Serve(conn Conn) error {
 		s.logf("listen error: %s", err)
 		return err
 	}
-	s.logf("%s <---> %s <---> %s", conn.RemoteAddr().String(), conn.LocalAddr().String(), addr.String())
+	s.logf("%s <---> %s", conn.RemoteAddr().String(), addr.String())
 	err = s.relay(conn, rc, addr)
 	if err != nil {
 		s.logf("relay error: %s", err)
@@ -89,10 +89,10 @@ func (s *Server) relay(conn Conn, rc net.PacketConn, addr net.Addr) error {
 
 	// ignore timeout error.
 	err1 := <-done
-	if errors.Is(err, os.ErrDeadlineExceeded) {
+	if !errors.Is(err, os.ErrDeadlineExceeded) {
 		return err
 	}
-	if errors.Is(err1, os.ErrDeadlineExceeded) {
+	if !errors.Is(err1, os.ErrDeadlineExceeded) {
 		return err1
 	}
 	return nil
