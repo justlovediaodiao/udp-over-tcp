@@ -89,7 +89,7 @@ func resloveSocksAddr(addr net.Addr) (SocksAddr, error) {
 	if ok {
 		return SocksAddr(a), nil
 	}
-	socksAddr := ParseSocksAddr(a.String())
+	socksAddr := ParseSocksAddr(addr.String())
 	if socksAddr == nil {
 		return nil, errors.New("invalid address")
 	}
@@ -115,7 +115,7 @@ func (c *defaultPacketConn) ReadPacket(p []byte) (int, net.Addr, net.Addr, error
 }
 
 func (c *defaultPacketConn) WritePacket(p []byte, target net.Addr, addr net.Addr) (int, error) {
-	socksAddr, err := resloveSocksAddr(addr)
+	socksAddr, err := resloveSocksAddr(target)
 	if err != nil {
 		return 0, err
 	}
