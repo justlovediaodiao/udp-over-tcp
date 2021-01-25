@@ -20,12 +20,7 @@ const (
 // SocksAddr is socks addr defined in RFC 1928.
 type SocksAddr []byte
 
-// Network impl net.Addr.
-func (addr SocksAddr) Network() string {
-	return ""
-}
-
-// String impl net.Addr
+// String return address string.
 func (addr SocksAddr) String() string {
 	var host string
 	switch addr[0] {

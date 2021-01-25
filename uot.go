@@ -74,6 +74,28 @@ func DefaultPacketConn(conn net.PacketConn) PacketConn {
 	return &defaultPacketConn{conn}
 }
 
+type targetAddr SocksAddr
+
+func (a targetAddr) Network() string {
+	return "udp"
+}
+
+func (a targetAddr) String() string {
+	return SocksAddr(a).String()
+}
+
+func resloveSocksAddr(addr net.Addr) (SocksAddr, error) {
+	a, ok := addr.(targetAddr)
+	if ok {
+		return SocksAddr(a), nil
+	}
+	socksAddr := ParseSocksAddr(a.String())
+	if socksAddr == nil {
+		return nil, errors.New("invalid address")
+	}
+	return socksAddr, nil
+}
+
 func (c *defaultPacketConn) ReadPacket(p []byte) (int, net.Addr, net.Addr, error) {
 	n, addr, err := c.PacketConn.ReadFrom(p)
 	if err != nil {
@@ -89,18 +111,14 @@ func (c *defaultPacketConn) ReadPacket(p []byte) (int, net.Addr, net.Addr, error
 	}
 	length := head + len(target)
 	copy(p, p[length:n])
-	return n - length, target, addr, nil
+	return n - length, targetAddr(target), addr, nil
 }
 
 func (c *defaultPacketConn) WritePacket(p []byte, target net.Addr, addr net.Addr) (int, error) {
-	socksAddr, ok := target.(SocksAddr)
-	if !ok {
-		socksAddr = ParseSocksAddr(target.String())
-		if socksAddr == nil {
-			return 0, errors.New("error socks address")
-		}
+	socksAddr, err := resloveSocksAddr(addr)
+	if err != nil {
+		return 0, err
 	}
-
 	length := len(socksAddr) + len(p) + 3
 	if length > MaxPacketSize {
 		return 0, errors.New("over max package size")
@@ -115,17 +133,21 @@ func (c *defaultPacketConn) WritePacket(p []byte, target net.Addr, addr net.Addr
 
 func (c *defaultConn) Handshake(addr net.Addr) (net.Addr, error) {
 	if c.isClient {
-		target, ok := addr.(SocksAddr)
-		if !ok {
-			return nil, errors.New("not a socks address")
+		socksAddr, err := resloveSocksAddr(addr)
+		if err != nil {
+			return nil, err
 		}
-		_, err := c.Conn.Write(target)
+		_, err = c.Conn.Write(socksAddr)
 		if err != nil {
 			return nil, err
 		}
 		return addr, nil
 	}
-	return ReadSocksAddr(c.Conn)
+	a, err := ReadSocksAddr(c.Conn)
+	if err != nil {
+		return nil, err
+	}
+	return targetAddr(a), nil
 }
 
 // Read read a full udp packet, if b is shorter than packet, return error.
