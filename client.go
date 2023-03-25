@@ -59,6 +59,10 @@ func (c *Client) Serve(conn PacketConn, server string) {
 		n, target, addr, err := conn.ReadPacket(buf)
 		if err != nil {
 			c.logf("read packet error: %s", err)
+			if errors.Is(err, net.ErrClosed) {
+				c.logf("udp listenner closed, exit")
+				return
+			}
 			continue
 		}
 		key := addr.String()
