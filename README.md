@@ -1,9 +1,17 @@
 # UDP-Over-TCP
 
-UDP-Over-TCP is a proxy library written in Go. It transfers udp packets over tcp connections. 
+UDP-Over-TCP is a proxy library written in Go. It works on transport layer, which transfers payload of UDP packet over TCP. It does not involving IP or TCP/UDP packet headers.
 
-```
-app <--udp--> client <--tcp--> server <--udp--> target
+For example: app sends `hello` to github.com over UDP and github.com replies `nice`. When using UDP-Over-TCP, the communication is as follow:
+
+```mermaid
+sequenceDiagram
+app ->> client: [udp] github.com hello
+client ->> server: [tcp] github.com hello
+server ->> github.com: [udp] hello
+github.com -->> server: [udp] nice
+server -->> client: [tcp] nice
+client -->> app: [udp] nice
 ```
 
 
