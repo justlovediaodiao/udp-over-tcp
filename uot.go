@@ -7,8 +7,9 @@ import (
 	"net"
 )
 
-// MaxPacketSize is max udp packet size.
-const MaxPacketSize = 65535
+// MaxPacketSize is max udp packet payload size.
+// It is 65535 - 20(IP header) - 8(UDP header).
+const MaxPacketSize = 65535 - 20 - 8
 
 // Conn is an udp-over-tcp connection.
 type Conn interface {
