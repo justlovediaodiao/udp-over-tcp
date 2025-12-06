@@ -68,6 +68,9 @@ func ReadSocksAddr(r io.Reader) (SocksAddr, error) {
 	n += nn
 	// read 2-byte port
 	nn, err = io.ReadFull(r, buf[n:n+2])
+	if err != nil {
+		return nil, err
+	}
 	n += nn
 	return buf[:n], nil
 }
