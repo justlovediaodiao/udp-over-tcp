@@ -72,6 +72,7 @@ func (c *Client) Serve(conn PacketConn, server string) {
 			pbuf = make(chan []byte, c.bufSize())
 			nat.Set(key, pbuf)
 			go func() {
+				defer nat.Del(key)
 				rc, err := c.Dialer(server)
 				if err != nil {
 					c.logf("dial to %s error: %s", server, err)
@@ -89,7 +90,6 @@ func (c *Client) Serve(conn PacketConn, server string) {
 				if err != nil {
 					c.logf("relay error: %s", err)
 				}
-				nat.Del(key)
 			}()
 		}
 		b := make([]byte, n)
@@ -105,6 +105,7 @@ func (c *Client) Serve(conn PacketConn, server string) {
 // relay copy between udp and tcp conn until timeout.
 func (c *Client) relay(conn PacketConn, rc Conn, target net.Addr, addr net.Addr, pbuf chan []byte) error {
 	done := make(chan error, 1)
+	closeCh := make(chan struct{})
 	// relay from udp to tcp
 	go func() {
 		defer rc.SetReadDeadline(time.Now()) // wake up anthoer goroutine
@@ -112,20 +113,20 @@ func (c *Client) relay(conn PacketConn, rc Conn, target net.Addr, addr net.Addr,
 			t := time.NewTimer(c.timeout())
 			select {
 			case buf := <-pbuf:
-				if buf == nil {
-					done <- nil
-					return
-				}
+				t.Stop()
 				_, err := rc.Write(buf)
 				if err != nil {
 					done <- err
 					return
 				}
+			case <-closeCh:
+				t.Stop()
+				done <- nil
+				return
 			case <-t.C:
 				done <- nil
 				return
 			}
-			t.Stop()
 		}
 	}()
 
@@ -143,7 +144,7 @@ func (c *Client) relay(conn PacketConn, rc Conn, target net.Addr, addr net.Addr,
 			break
 		}
 	}
-	pbuf <- nil // wake up anthoer goroutine
+	close(closeCh)
 
 	// ignore timeout error.
 	err1 := <-done

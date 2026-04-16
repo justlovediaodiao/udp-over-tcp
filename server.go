@@ -22,6 +22,7 @@ func (s *Server) logf(format string, v ...interface{}) {
 // Serve read packet over tcp connection and send to target address in udp.
 // read response from target address and send to address on the connection.
 func (s *Server) Serve(conn Conn) error {
+	defer conn.Close()
 	// handshake, read target addr.
 	addr, err := conn.Handshake(nil)
 	if err != nil {
@@ -33,6 +34,7 @@ func (s *Server) Serve(conn Conn) error {
 		s.logf("listen error: %s", err)
 		return err
 	}
+	defer rc.Close()
 	s.logf("%s <---> %s", conn.RemoteAddr().String(), addr.String())
 	err = s.relay(conn, rc, addr)
 	if err != nil {

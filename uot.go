@@ -103,7 +103,7 @@ func (c *defaultPacketConn) ReadPacket(p []byte) (int, net.Addr, net.Addr, error
 		return 0, nil, nil, err
 	}
 	head := 3 // RSV FRAG
-	if len(p) < head {
+	if n < head {
 		return 0, nil, nil, io.ErrShortBuffer
 	}
 	target, err := ReadSocksAddr(bytes.NewReader(p[head:n]))
