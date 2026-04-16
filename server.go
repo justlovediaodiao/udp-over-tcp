@@ -91,10 +91,10 @@ func (s *Server) relay(conn Conn, rc net.PacketConn, addr net.Addr) error {
 
 	// ignore timeout error.
 	err1 := <-done
-	if !errors.Is(err, os.ErrDeadlineExceeded) {
+	if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
 		return err
 	}
-	if !errors.Is(err1, os.ErrDeadlineExceeded) {
+	if err1 != nil && !errors.Is(err1, os.ErrDeadlineExceeded) {
 		return err1
 	}
 	return nil

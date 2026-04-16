@@ -148,10 +148,10 @@ func (c *Client) relay(conn PacketConn, rc Conn, target net.Addr, addr net.Addr,
 
 	// ignore timeout error.
 	err1 := <-done
-	if !errors.Is(err, os.ErrDeadlineExceeded) {
+	if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
 		return err
 	}
-	if !errors.Is(err1, os.ErrDeadlineExceeded) {
+	if err != nil && !errors.Is(err1, os.ErrDeadlineExceeded) {
 		return err1
 	}
 	return nil
